@@ -4,27 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chmod Calculator</title>
-    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <h1>Chmod Calculator</h1>
-    <p>Convert Linux file permissions between symbolic and numeric formats.</p>
-    
+
     <form action="/convert" method="POST">
-        <div>
-            <label for="symbolic">Symbolic (e.g., -rwxr-xr-x):</label>
-            <input type="text" id="symbolic" name="symbolic" value="{{.Symbolic}}">
-        </div>
-        <div>
-            <label for="numeric">Numeric (e.g., 755):</label>
-            <input type="text" id="numeric" name="numeric" value="{{.Numeric}}">
-        </div>
+        <h3>Input Permissions</h3>
+
+        <label for="numeric">Numeric:</label>
+        <input type="text" id="numeric" name="numeric" value="{{.Numeric}}">
+
+        <label for="symbolic">Symbolic:</label>
+        <input type="text" id="symbolic" name="symbolic" value="{{.Symbolic}}">
+
+        <h3>Owner Permissions</h3>
+        <input type="checkbox" name="ownerRead" {{if .OwnerRead}}checked{{end}}> Read
+        <input type="checkbox" name="ownerWrite" {{if .OwnerWrite}}checked{{end}}> Write
+        <input type="checkbox" name="ownerExec" {{if .OwnerExec}}checked{{end}}> Execute
+
+        <h3>Group Permissions</h3>
+        <input type="checkbox" name="groupRead" {{if .GroupRead}}checked{{end}}> Read
+        <input type="checkbox" name="groupWrite" {{if .GroupWrite}}checked{{end}}> Write
+        <input type="checkbox" name="groupExec" {{if .GroupExec}}checked{{end}}> Execute
+
+        <h3>Public Permissions</h3>
+        <input type="checkbox" name="publicRead" {{if .PublicRead}}checked{{end}}> Read
+        <input type="checkbox" name="publicWrite" {{if .PublicWrite}}checked{{end}}> Write
+        <input type="checkbox" name="publicExec" {{if .PublicExec}}checked{{end}}> Execute
+
+        <br><br>
         <button type="submit">Convert</button>
     </form>
 
-    {{if .Result}}
-    <h2>Result</h2>
-    <p>{{.Result}}</p>
-    {{end}}
+    <h3>Result:</h3>
+    <p>Numeric: {{.Numeric}}</p>
+    <p>Symbolic: {{.Symbolic}}</p>
 </body>
 </html>

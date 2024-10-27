@@ -8,119 +8,127 @@ import (
 	"strings"
 )
 
+type PermissionData struct {
+	Numeric     string
+	Symbolic    string
+	OwnerRead   bool
+	OwnerWrite  bool
+	OwnerExec   bool
+	GroupRead   bool
+	GroupWrite  bool
+	GroupExec   bool
+	PublicRead  bool
+	PublicWrite bool
+	PublicExec  bool
+}
+
 func main() {
-	http.HandleFunc("/", homePage)
+	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/convert", convertHandler)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	fmt.Println("Server started at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
 
-// Render the homepage
-func homePage(w http.ResponseWriter, r *http.Request) {
+func homeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, _ := template.ParseFiles("templates/index.html")
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, PermissionData{})
 }
 
-// Handle conversion
 func convertHandler(w http.ResponseWriter, r *http.Request) {
+	var data PermissionData
 	r.ParseForm()
-	symbolic := r.FormValue("symbolic")
-	numeric := r.FormValue("numeric")
 
-	var result string
-	var err error
-
-	if symbolic != "" {
-		result, err = symbolicToNumeric(symbolic)
-	} else if numeric != "" {
-		result, err = numericToSymbolic(numeric)
+	// Jika input numerik diberikan
+	if numeric, ok := r.Form["numeric"]; ok && numeric[0] != "" {
+		data.Numeric = numeric[0]
+		data.Symbolic = numericToSymbolic(numeric[0])
 	}
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// Jika input simbolik diberikan
+	if symbolic, ok := r.Form["symbolic"]; ok && symbolic[0] != "" {
+		data.Symbolic = symbolic[0]
+		data.Numeric = symbolicToNumeric(symbolic[0])
+	}
+
+	// Update checkbox berdasarkan izin numerik
+	if data.Numeric != "" {
+		setCheckboxesFromNumeric(&data)
+	}
+
+	tmpl, _ := template.ParseFiles("templates/index.html")
+	tmpl.Execute(w, data)
+}
+
+// Fungsi untuk mengonversi izin numerik ke simbolik
+func numericToSymbolic(numeric string) string {
+	num, err := strconv.Atoi(numeric)
+	if err != nil || num < 0 || num > 777 {
+		return ""
+	}
+
+	perms := []string{"---", "---", "---"}
+	for i := 2; i >= 0; i-- {
+		perm := num % 10
+		perms[i] = fmt.Sprintf("%c%c%c",
+			ifElse(perm&4 != 0, 'r', '-'),
+			ifElse(perm&2 != 0, 'w', '-'),
+			ifElse(perm&1 != 0, 'x', '-'))
+		num /= 10
+	}
+	return "-" + strings.Join(perms, "")
+}
+
+// Fungsi untuk mengonversi izin simbolik ke numerik
+func symbolicToNumeric(symbolic string) string {
+	if len(symbolic) != 10 || symbolic[0] != '-' {
+		return ""
+	}
+
+	numeric := 0
+	for i := 1; i <= 9; i += 3 {
+		perm := 0
+		if symbolic[i] == 'r' {
+			perm += 4
+		}
+		if symbolic[i+1] == 'w' {
+			perm += 2
+		}
+		if symbolic[i+2] == 'x' {
+			perm += 1
+		}
+		numeric = numeric*10 + perm
+	}
+	return fmt.Sprintf("%03d", numeric)
+}
+
+// Fungsi untuk mengatur checkboxes berdasarkan izin numerik
+func setCheckboxesFromNumeric(data *PermissionData) {
+	if len(data.Numeric) != 3 {
 		return
 	}
 
-	tmpl, _ := template.ParseFiles("templates/index.html")
-	tmpl.Execute(w, map[string]string{
-		"Symbolic": symbolic,
-		"Numeric":  numeric,
-		"Result":   result,
-	})
+	owner, _ := strconv.Atoi(string(data.Numeric[0]))
+	group, _ := strconv.Atoi(string(data.Numeric[1]))
+	public, _ := strconv.Atoi(string(data.Numeric[2]))
+
+	data.OwnerRead = owner&4 != 0
+	data.OwnerWrite = owner&2 != 0
+	data.OwnerExec = owner&1 != 0
+
+	data.GroupRead = group&4 != 0
+	data.GroupWrite = group&2 != 0
+	data.GroupExec = group&1 != 0
+
+	data.PublicRead = public&4 != 0
+	data.PublicWrite = public&2 != 0
+	data.PublicExec = public&1 != 0
 }
 
-// Convert symbolic permissions (e.g., -rw-r--r--) to numeric (e.g., 644)
-func symbolicToNumeric(perm string) (string, error) {
-	if len(perm) != 10 {
-		return "", fmt.Errorf("invalid permission format")
+// Fungsi sederhana untuk ternary
+func ifElse(cond bool, a, b rune) rune {
+	if cond {
+		return a
 	}
-
-	owner := perm[1:4]
-	group := perm[4:7]
-	public := perm[7:10]
-
-	numeric := fmt.Sprintf("%d%d%d", toOctalSymbol(owner), toOctalSymbol(group), toOctalSymbol(public))
-	return numeric, nil
-}
-
-// Convert each symbolic part (e.g., rw-) to its octal equivalent
-func toOctalSymbol(symbols string) int {
-	val := 0
-	if symbols[0] == 'r' {
-		val += 4
-	}
-	if symbols[1] == 'w' {
-		val += 2
-	}
-	if symbols[2] == 'x' {
-		val += 1
-	}
-	return val
-}
-
-// Convert numeric permissions (e.g., 755) to symbolic (e.g., -rwxr-xr-x)
-func numericToSymbolic(numeric string) (string, error) {
-	if len(numeric) != 3 {
-		return "", fmt.Errorf("invalid numeric permission format")
-	}
-
-	owner, err := strconv.Atoi(string(numeric[0]))
-	if err != nil {
-		return "", err
-	}
-	group, err := strconv.Atoi(string(numeric[1]))
-	if err != nil {
-		return "", err
-	}
-	public, err := strconv.Atoi(string(numeric[2]))
-	if err != nil {
-		return "", err
-	}
-
-	symbolic := fmt.Sprintf("-%s%s%s", toSymbol(owner), toSymbol(group), toSymbol(public))
-	return symbolic, nil
-}
-
-// Convert each octal value (e.g., 7) to its symbolic equivalent (e.g., rwx)
-func toSymbol(octal int) string {
-	var symbols strings.Builder
-	if octal >= 4 {
-		symbols.WriteString("r")
-		octal -= 4
-	} else {
-		symbols.WriteString("-")
-	}
-	if octal >= 2 {
-		symbols.WriteString("w")
-		octal -= 2
-	} else {
-		symbols.WriteString("-")
-	}
-	if octal >= 1 {
-		symbols.WriteString("x")
-	} else {
-		symbols.WriteString("-")
-	}
-	return symbols.String()
+	return b
 }
