@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chmod Calculator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Chmod Calculator</h1>
+    <p>Convert Linux file permissions between symbolic and numeric formats.</p>
+    
+    <form action="/convert" method="POST">
+        <div>
+            <label for="symbolic">Symbolic (e.g., -rwxr-xr-x):</label>
+            <input type="text" id="symbolic" name="symbolic" value="{{.Symbolic}}">
+        </div>
+        <div>
+            <label for="numeric">Numeric (e.g., 755):</label>
+            <input type="text" id="numeric" name="numeric" value="{{.Numeric}}">
+        </div>
+        <button type="submit">Convert</button>
+    </form>
+
+    {{if .Result}}
+    <h2>Result</h2>
+    <p>{{.Result}}</p>
+    {{end}}
+</body>
+</html>
