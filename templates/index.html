@@ -4,40 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chmod Calculator</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Chmod Calculator</h1>
+    <div class="container">
+        <h1>Chmod Calculator</h1>
 
-    <form action="/convert" method="POST">
-        <h3>Input Permissions</h3>
+        <form action="/convert" method="POST" class="form-container">
+            <div class="input-section">
+                <label for="numeric">Numeric:</label>
+                <input type="text" id="numeric" name="numeric" value="{{.Numeric}}" placeholder="e.g. 755">
 
-        <label for="numeric">Numeric:</label>
-        <input type="text" id="numeric" name="numeric" value="{{.Numeric}}">
+                <label for="symbolic">Symbolic:</label>
+                <input type="text" id="symbolic" name="symbolic" value="{{.Symbolic}}" placeholder="e.g. -rwxr-xr-x">
+            </div>
 
-        <label for="symbolic">Symbolic:</label>
-        <input type="text" id="symbolic" name="symbolic" value="{{.Symbolic}}">
+            <div class="permissions-section">
+                <h3>Owner Permissions</h3>
+                <label><input type="checkbox" name="ownerRead" {{if .OwnerRead}}checked{{end}}> Read</label>
+                <label><input type="checkbox" name="ownerWrite" {{if .OwnerWrite}}checked{{end}}> Write</label>
+                <label><input type="checkbox" name="ownerExec" {{if .OwnerExec}}checked{{end}}> Execute</label>
 
-        <h3>Owner Permissions</h3>
-        <input type="checkbox" name="ownerRead" {{if .OwnerRead}}checked{{end}}> Read
-        <input type="checkbox" name="ownerWrite" {{if .OwnerWrite}}checked{{end}}> Write
-        <input type="checkbox" name="ownerExec" {{if .OwnerExec}}checked{{end}}> Execute
+                <h3>Group Permissions</h3>
+                <label><input type="checkbox" name="groupRead" {{if .GroupRead}}checked{{end}}> Read</label>
+                <label><input type="checkbox" name="groupWrite" {{if .GroupWrite}}checked{{end}}> Write</label>
+                <label><input type="checkbox" name="groupExec" {{if .GroupExec}}checked{{end}}> Execute</label>
 
-        <h3>Group Permissions</h3>
-        <input type="checkbox" name="groupRead" {{if .GroupRead}}checked{{end}}> Read
-        <input type="checkbox" name="groupWrite" {{if .GroupWrite}}checked{{end}}> Write
-        <input type="checkbox" name="groupExec" {{if .GroupExec}}checked{{end}}> Execute
+                <h3>Public Permissions</h3>
+                <label><input type="checkbox" name="publicRead" {{if .PublicRead}}checked{{end}}> Read</label>
+                <label><input type="checkbox" name="publicWrite" {{if .PublicWrite}}checked{{end}}> Write</label>
+                <label><input type="checkbox" name="publicExec" {{if .PublicExec}}checked{{end}}> Execute</label>
+            </div>
 
-        <h3>Public Permissions</h3>
-        <input type="checkbox" name="publicRead" {{if .PublicRead}}checked{{end}}> Read
-        <input type="checkbox" name="publicWrite" {{if .PublicWrite}}checked{{end}}> Write
-        <input type="checkbox" name="publicExec" {{if .PublicExec}}checked{{end}}> Execute
+            <button type="submit">Convert</button>
+        </form>
 
-        <br><br>
-        <button type="submit">Convert</button>
-    </form>
-
-    <h3>Result:</h3>
-    <p>Numeric: {{.Numeric}}</p>
-    <p>Symbolic: {{.Symbolic}}</p>
+        <div class="result-section">
+            <h3>Result:</h3>
+            <p><strong>Numeric:</strong> {{.Numeric}}</p>
+            <p><strong>Symbolic:</strong> {{.Symbolic}}</p>
+        </div>
+    </div>
 </body>
 </html>

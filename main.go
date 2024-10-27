@@ -25,9 +25,10 @@ type PermissionData struct {
 func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/convert", convertHandler)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static")))) // Handler untuk CSS
 
-	fmt.Println("Server started at http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server started at http://localhost:8011")
+	http.ListenAndServe(":8011", nil)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
